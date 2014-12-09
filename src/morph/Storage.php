@@ -24,8 +24,6 @@ class Storage
 	 */
 	private $db;
 
-	private $useSafe = false;
-
 	/**
 	 * Returns the singleton instance of this class
 	 * @return Morph_Storage
@@ -68,17 +66,6 @@ class Storage
 	private function __construct(\MongoDB $db)
 	{
 		$this->db = $db;
-	}
-
-	/**
-	 * If set to true then the 'safe' option for saves is used
-	 *
-	 * @param boolean $useSafe
-	 */
-	public function useSafe($useSafe)
-	{
-		$this->useSafe = (bool)$useSafe;
-		return $this;
 	}
 
 	/**
@@ -178,8 +165,6 @@ class Storage
             throw new \InvalidArgumentException('Cannot insert an object with an id already');
         }
 
-		$options = array_merge(array('safe'=>$this->useSafe), $options);
-
 		$savedOk = $this->db->selectCollection($object->collection())->save($data, $options);
 		if($savedOk){
 			$object->__setData($data, Enum::STATE_CLEAN);
@@ -210,7 +195,7 @@ class Storage
         // criteria can generally be the id of the document
         $query = array('_id' => $object->id());
 
-        $options = array_merge(array('safe' => $this->useSafe, 'multiple' => false), $options);
+        $options = array_merge(array('multiple' => false), $options);
 
         $data = array('$set' => $data);
 
@@ -232,7 +217,7 @@ class Storage
 		$query = array('_id' => $object->id());
 		return $this->db->selectCollection($object->collection())->remove($query, array('justOne' => true));
 	}
-	
+
 	/**
 	 * Deletes documents based on query
 	 *
@@ -248,7 +233,7 @@ class Storage
 		$class = get_class($object);
 
 		$query = (is_null($query)) ? new Query() : $query;
-		
+
 		$options = array();
 		if (!is_null($safe))
 		{
